@@ -24,6 +24,8 @@ struct Point {
 	}
 };
 
+Point Record;
+
 class OthelloBoard {
 public:
     enum SPOT_STATE {
@@ -184,7 +186,7 @@ public:
         if (fail) {
             ss << "Winner is " << encode_player(winner) << " (Opponent performed invalid move)\n";
         } else if (next_valid_spots.size() > 0) {
-            ss << encode_player(cur_player) << "'s turn\n";
+            ss << encode_player(cur_player) << "'s turn  ---->  The opponent puts disc on (" << Record.x << ", " << Record.y << ")\n";
         } else {
             ss << "Winner is " << encode_player(winner) << "\n";
         }
@@ -233,7 +235,7 @@ const std::string file_log = "gamelog.txt";
 const std::string file_state = "state";
 const std::string file_action = "action";
 // Timeout is set to 10 when TA test your code.
-const int timeout = 5;
+const int timeout = 10;
 
 std::string player_filename[3];
 bool humanplayer_white = false;
@@ -305,6 +307,7 @@ int main(int argc, char** argv) {
 		std::cin >> humanplayer_white;
 	} while (!std::cin.good());
 	
+	std::cin.get();
 	std::cout << "------- Press Any Key To Start -------";
 	std::cin.get();
 	
@@ -328,6 +331,7 @@ int main(int argc, char** argv) {
             int x, y;
             if (!(fin >> x)) break;
             if (!(fin >> y)) break;
+			Record.x = x; Record.y = y;
             p.x = x; p.y = y;
         }
         fin.close();
