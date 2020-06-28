@@ -6,6 +6,10 @@
 #include <vector>
 #include <cassert>
 
+bool humanplayer_white = false;
+bool humanplayer_black = false;
+bool input_board = false;
+
 struct Point {
     int x, y;
 	Point() : Point(0, 0) {}
@@ -109,14 +113,28 @@ public:
         reset();
     }
     void reset() {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                board[i][j] = EMPTY;
-            }
-        }
 		
-        board[3][4] = board[4][3] = BLACK;
-        board[3][3] = board[4][4] = WHITE;
+		if (input_board)
+		{
+			std::ifstream board_in;
+			board_in.open("board_initialize.txt");
+			
+			for (int i = 0; i < SIZE; i++)
+				for (int k = 0; k < SIZE; k++)
+					board_in >> board[i][k];
+		}
+		else
+		{
+			for (int i = 0; i < SIZE; i++) {
+				for (int j = 0; j < SIZE; j++) {
+					board[i][j] = EMPTY;
+				}
+			}
+			
+			board[3][4] = board[4][3] = BLACK;
+			board[3][3] = board[4][4] = WHITE;
+		}
+		
         cur_player = BLACK;
         disc_count[EMPTY] = 8*8-4;
         disc_count[BLACK] = 2;
@@ -190,15 +208,36 @@ public:
         } else {
             ss << "Winner is " << encode_player(winner) << "\n";
         }
-        ss << "+---------------+\n";
-        for (i = 0; i < SIZE; i++) {
-            ss << "|";
-            for (j = 0; j < SIZE-1; j++) {
-                ss << encode_spot(i, j) << " ";
-            }
-            ss << encode_spot(i, j) << "|\n";
-        }
-        ss << "+---------------+\n";
+		
+		if (humanplayer_black or humanplayer_white)
+		{
+			ss << "\n  0 1 2 3 4 5 6 7 \n";
+			ss << " +---------------+\n";
+			for (i = 0; i < SIZE; i++) {
+				ss << i << "|";
+				for (j = 0; j < SIZE; j++) {
+					ss << encode_spot(i, j) << "|";
+				}
+				ss << "\n";
+				
+				if (i != SIZE - 1)
+					ss << " |---------------|\n";
+			}
+			ss << " +---------------+\n\n";
+		}
+		else
+		{
+			ss << "+---------------+\n";
+			for (i = 0; i < SIZE; i++) {
+				ss << "|";
+				for (j = 0; j < SIZE-1; j++) {
+					ss << encode_spot(i, j) << " ";
+				}
+				ss << encode_spot(i, j) << "|\n";
+			}
+			ss << "+---------------+\n";
+		}
+		
         ss << next_valid_spots.size() << " valid moves: {";
         if (next_valid_spots.size() > 0) {
             Point p = next_valid_spots[0];
@@ -238,9 +277,6 @@ const std::string file_action = "action";
 const int timeout = 10;
 
 std::string player_filename[3];
-bool humanplayer_white = false;
-bool humanplayer_black = false;
-
 
 void launch_executable(std::string filename)
 {
@@ -297,15 +333,12 @@ int main(int argc, char** argv) {
     std::cout << "Player Black(O) File: " << player_filename[OthelloBoard::BLACK] << std::endl;
     std::cout << "Player White(X) File: " << player_filename[OthelloBoard::WHITE] << std::endl;
 	
-	do
-	{
-		std::cin.clear();
-		
-		std::cout << "Black(O) Human Player: (1/0)";
-		std::cin >> humanplayer_black;
-		std::cout << "White(X) Human Player: (1/0)";
-		std::cin >> humanplayer_white;
-	} while (!std::cin.good());
+	std::cout << "Input Board state: (1/0)";
+	std::cin >> input_board;
+	std::cout << "Black(O) Human Player: (1/0)";
+	std::cin >> humanplayer_black;
+	std::cout << "White(X) Human Player: (1/0)";
+	std::cin >> humanplayer_white;
 	
 	std::cin.get();
 	std::cout << "------- Press Any Key To Start -------";
