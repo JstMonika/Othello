@@ -10,18 +10,6 @@
 #include <set>
 using namespace std;
 
-int value_table[8][8]
-{
-	{5, -2, 3, 2, 2, 3, -2, 5},
-	{-2, -5, 3, 2, 2, 3, -5, -2},
-	{3, 3, 2, 2, 2, 2, 3, 3},
-	{2, 2, 2, 2, 2, 2, 2, 2},
-	{2, 2, 2, 2, 2, 2, 2, 2},
-	{3, 3, 2, 2, 2, 2, 3, 3},
-	{-2, -5, 3, 2, 2, 3, -5, -2},
-	{5, -2, 3, 2, 2, 3, -2, 5},
-};
-
 // ███████████████████████████████▀█░░░░░░░█▀▀░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▀▀█████▌███▀▀███████▐███████████▌
 // █████████████████████████████▀░░▐▌░░▄▄▄█░░░░░░░░░░▀██░░░░░░░░▄████▄▄▄▄▄███████▄▄▄▄▄▄▄▄██████▄███████▀███████████▌
 // ███████████████████████████▀░░░░░█▄▄█▀▀░░░░░░▄▄██▀▀▀▀░░░▄▄▄▀▀██████████████████████████▀███▀███████▌▐███░███████▌
@@ -80,15 +68,23 @@ int value_table[8][8]
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▄▄███████████████████████████████████████████████████████▌░▐█
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀░░▀▀
 
+int value_table[8][8]
+{
+	{1600,	-500,	300,	250,	250,	300,	-500,	1600},
+	{-500,	-900,	150,	60,		60,		150,	-900,	-500},
+	{300,	150,	150,	33,		33,		150,	150,	300},
+	{250,	60,	 	33,		33,		33,		33,		60,		250},
+	{250,	60,	 	33,		33,		33,		33,		60,		250},
+	{300,	150,	150,	33,		33,		150,	150,	300},
+	{-500,	-900,	150,	60,		60,		150,	-900,	-500},
+	{1600,	-500,	300,	250,	250,	300,	-500,	1600},
+};
+
 struct Point {
     int x, y;
 	Point(int a, int b) : x(a) , y(b) {}
-	
-	void operator+=(Point& source)
-	{
-		this->x += source.x;
-		this->y += source.y;
-	}
+	Point operator+(const Point& a)
+	{ return Point(this->x+a.x, this->y+a.y); }
 };
 
 const int SIZE = 8;
@@ -98,12 +94,10 @@ using pai = std::pair<Point, int>;
 int player;
 arr board;
 std::vector<Point> next_valid_spots;
+vector<Point> find_valid(arr, int);
 
 int cal(const arr& source, int player)
 {
-	ofstream out;
-	out.open("test.txt");
-	
 	int count = 0;
 	
 	bool survive[SIZE][SIZE];
@@ -113,7 +107,7 @@ int cal(const arr& source, int player)
 	int c[2][4] = {{0, 0, SIZE-1, SIZE-1}, {SIZE-1, 0, SIZE-1, 0}};
 	for (int i = 0; i < 4; i++)
 		if (source[c[0][i]][c[1][i]] == player)
-			survive[c[0][i]][c[i][i]] = true;
+			survive[c[0][i]][c[1][i]] = true;
 		
 	for (int i = 0; i < SIZE; i++)
 	{
@@ -195,6 +189,8 @@ int cal(const arr& source, int player)
 		}
 	}
 	
+	/*
+	cout << endl << player << endl;
 	for (int i = 0; i < SIZE; i++)
 	{
 		for (int k = 0; k < SIZE; k++)
@@ -214,18 +210,23 @@ int cal(const arr& source, int player)
 		}
 		cout << endl;
 	}	
-	count += number * 10;
+	*/
+	
+	count += number * 100;
 	
 	for (int i = 0; i < SIZE; i++)
 		for (int k = 0; k < SIZE; k++)
 			if (source[i][k] == player)
 				count += value_table[i][k];
 			
+	count += find_valid(source, player).size() * 75;
+		
 	return count;
 }
 
 void read_board(std::ifstream& fin) {
     fin >> player;
+	cout << "Player: " << player << endl;
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             fin >> board[i][j];
@@ -256,6 +257,29 @@ Point dir[8] = {
 
 inline bool inside_board(int x, int y) {
 	return (x >= 0 and x < SIZE and y >= 0 and y < SIZE);
+}
+
+void flip_discs(arr& state, Point center, int tplayer) {
+    for (Point i: dir) {
+        // Move along the direction while testing.
+        Point p = center + i;
+        if (state[p.x][p.y] != 3-tplayer)
+            continue;
+        std::vector<Point> discs({p});
+        p = p + i;
+        while (inside_board(p.x, p.y) && state[p.x][p.y] != 0) {
+            if (state[p.x][p.y] == tplayer) {
+                for (Point s: discs) {
+					// cout << "fliping......";
+                    state[s.x][s.y] = tplayer;
+					// cout << state[s.x][s.y] << tplayer << endl;
+                }
+                break;
+            }
+            discs.push_back(p);
+            p = p + i;
+        }
+    }
 }
 
 vector<Point> find_valid(arr state, int player)
@@ -298,78 +322,94 @@ vector<Point> find_valid(arr state, int player)
 	return tmp;
 }
 
-pai dfs(int step, arr state, int alpha, int beta, bool Max, int player)
+pai dfs(int step, arr state, int alpha, int beta, bool Max, int tplayer)
 {
 	if (step--)
 	{
+		// vector<pai> check;
+		
 		pai ret = make_pair(Point(-1, -1), ((Max) ? -1e9 : 1e9));
 		
-		vector<Point> valid_location = find_valid(state, player);
+		vector<Point> valid_location = find_valid(state, tplayer);
 		
-		for (auto i : valid_location)
+		if (valid_location.size())
 		{
-			arr next_state = state;
-			
-			if (!inside_board(i.x, i.y))
+			for (auto i : valid_location)
 			{
-				std::cout << "ERROR! (" << i.x << ", " << i.y << ") is not in the board!\n";
-				return ret;
-			}
-			if (state[i.x][i.y])
-			{
-				std::cout << "ERROR! Put on (" << i.x << ", " << i.y << ") but there has the value " << state[i.x][i.y] << "!\n";
-				return ret;
+				if (alpha >= beta)
+					break;
+				
+				// cout << '(' << i.x << ", " << i.y << ") ";
+				arr next_state = state;
+				
+				next_state[i.x][i.y] = tplayer;
+				flip_discs(next_state, i, tplayer);
+				
+				// cout << "Go (" << i.x << ", " << i.y << ") -----------------" << endl;
+				pai v = dfs(step, next_state, alpha, beta, !Max, 3-tplayer);
+				// cout << "--------------------------" << endl << endl;
+				
+				v.first.x = i.x;
+				v.first.y = i.y;
+				
+				// check.push_back(v);
+				
+				if (Max)
+				{
+					alpha = max(alpha, v.second);
+					ret = (v.second > ret.second) ? v : ret;
+				}
+				else
+				{
+					beta = min(beta, v.second);
+					ret = (v.second < ret.second) ? v : ret;
+				}
+				
+				// modifying alpha and beta.
 			}
 			
-			next_state[i.x][i.y] = player;
-			pai v = dfs(step, next_state, alpha, beta, !Max, !player);
+			/*
+			cout << "Go down depth: " << step << " ------------> " << tplayer << endl;
+			for (auto i : check)
+				cout << "{(" << i.first.x << ", " << i.first.y << "), " << i.second << "} ";
+			cout << endl;
+			cout << "return " << "{(" << ret.first.x << ", " << ret.first.y << "), " << ret.second << "}" << endl;
+			*/
 			
-			if (Max)
-			{
-				alpha = max(alpha, v.second);
-				ret = (v.second > ret.second) ? v : ret;
-				ret.first.x = i.x;
-				ret.first.y = i.y;
-			}
-			else
-			{
-				beta = min(beta, v.second);
-				ret = (v.second < ret.second) ? v : ret;
-				ret.first.x = i.x;
-				ret.first.y = i.y;
-			}
-			
-			// modifying alpha and beta.
-			
+			return ret;
 		}
-		
-		return ret;
+		else
+		{
+			pai v = dfs(step, state, alpha, beta, !Max, 3-tplayer);
+			
+			return v;
+		}
 	}
 	else
-		return make_pair(Point(-1, -1), cal(state, player));
+		return make_pair(Point(-1, -1), cal(state, player) - cal(state, 3-player));
 }
 
 void write_valid_spot(std::ofstream& fout) {
-	ofstream out;
-	out.open("test.txt");
     // Point p = next_valid_spots[index];
     // Remember to flush the output to ensure the last action is written to file.
 	
+	ofstream out_step;
+	out_step.open("check.txt");
+	
 	int steps = 1;
-	// while (true)
+	while (steps <= 50)
 	{
-		
-		pai tmp = dfs(steps, board, 1e9, -1e9, true, player);
+		pai tmp = dfs(steps, board, -1e9, 1e9, true, player);
 		
 		fout << tmp.first.x << " " << tmp.first.y << std::endl;
 		fout.flush();
-		out << tmp.first.x << ' ' << tmp.first.y << ' ' << std::endl;
-		out.flush();
 		
-		// steps += 2;
+		out_step << "{(" << tmp.first.x << ", " << tmp.first.y << "), " << tmp.second << "} -> " << steps << endl;
+		
+		steps++;
 	}
 	
-	out.close();
+	out_step.close();
 }
 
 int main(int, char** argv) {
