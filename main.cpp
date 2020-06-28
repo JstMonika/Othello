@@ -294,6 +294,17 @@ int main(int argc, char** argv) {
     player_filename[2] = argv[2];
     std::cout << "Player Black(O) File: " << player_filename[OthelloBoard::BLACK] << std::endl;
     std::cout << "Player White(X) File: " << player_filename[OthelloBoard::WHITE] << std::endl;
+	
+	do
+	{
+		std::cin.clear();
+		
+		std::cout << "Black(O) Human Player: (1/0)";
+		std::cin >> humanplayer_black;
+		std::cout << "White(X) Human Player: (1/0)";
+		std::cin >> humanplayer_white;
+	} while (!std::cin.good());
+	
 	std::cout << "------- Press Any Key To Start -------";
 	std::cin.get();
 	
