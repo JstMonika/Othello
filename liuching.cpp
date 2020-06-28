@@ -212,14 +212,14 @@ int cal(const arr& source, int player)
 	}	
 	*/
 	
-	count += number * 100;
+	count += number * 175;
 	
 	for (int i = 0; i < SIZE; i++)
 		for (int k = 0; k < SIZE; k++)
 			if (source[i][k] == player)
 				count += value_table[i][k];
 			
-	count += find_valid(source, player).size() * 75;
+	count += find_valid(source, player).size() * 125;
 		
 	return count;
 }
