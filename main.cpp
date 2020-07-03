@@ -114,6 +114,9 @@ public:
     }
     void reset() {
 		
+		for (int i = 0; i < 3; i++)
+			disc_count[i] = 0;
+		
 		if (input_board)
 		{
 			std::ifstream board_in;
@@ -121,7 +124,10 @@ public:
 			
 			for (int i = 0; i < SIZE; i++)
 				for (int k = 0; k < SIZE; k++)
+				{
 					board_in >> board[i][k];
+					disc_count[board[i][k]]++;
+				}
 		}
 		else
 		{
@@ -133,12 +139,13 @@ public:
 			
 			board[3][4] = board[4][3] = BLACK;
 			board[3][3] = board[4][4] = WHITE;
+			
+			disc_count[EMPTY] = 8*8-4;
+			disc_count[BLACK] = 2;
+			disc_count[WHITE] = 2;
 		}
 		
         cur_player = BLACK;
-        disc_count[EMPTY] = 8*8-4;
-        disc_count[BLACK] = 2;
-        disc_count[WHITE] = 2;
         next_valid_spots = get_valid_spots();
         done = false;
         winner = -1;
@@ -280,7 +287,6 @@ std::string player_filename[3];
 
 void launch_executable(std::string filename)
 {
-	
 	if ((humanplayer_white and filename == player_filename[2]) or (humanplayer_black and filename == player_filename[1]))
 	{
 		int row, col;
